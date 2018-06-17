@@ -8260,8 +8260,62 @@ var _elm_lang$html$Html_Events$Options = F2(
 		return {stopPropagation: a, preventDefault: b};
 	});
 
+var _user$project$Form$showQuestion = function (question) {
+	return A2(
+		_elm_lang$html$Html$p,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text(question.question),
+			_1: {ctor: '[]'}
+		});
+};
+var _user$project$Form$viewQuestions = function (questions) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		A2(_elm_lang$core$List$map, _user$project$Form$showQuestion, questions));
+};
 var _user$project$Form$getQuestionValue = function (question) {
 	return question.question;
+};
+var _user$project$Form$displayAnswer = function (answer) {
+	return A2(
+		_elm_lang$html$Html$label,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$input,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$type_('radio'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$disabled(true),
+						_1: {ctor: '[]'}
+					}
+				},
+				{ctor: '[]'}),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html$text(answer),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Form$showAnswers = function (question) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$fieldset,
+				{ctor: '[]'},
+				A2(_elm_lang$core$List$map, _user$project$Form$displayAnswer, question.answers)),
+			_1: {ctor: '[]'}
+		});
 };
 var _user$project$Form$getTitle = function (title) {
 	return _elm_lang$core$String$isEmpty(title) ? 'No Title Yet' : title;
@@ -8269,20 +8323,25 @@ var _user$project$Form$getTitle = function (title) {
 var _user$project$Form$subscriptions = function (_p0) {
 	return _elm_lang$core$Platform_Sub$none;
 };
-var _user$project$Form$Model = F3(
-	function (a, b, c) {
-		return {formTitle: a, questions: b, currentQuestion: c};
+var _user$project$Form$Model = F4(
+	function (a, b, c, d) {
+		return {formTitle: a, questions: b, currentQuestion: c, currentAnswer: d};
 	});
-var _user$project$Form$Question = function (a) {
-	return {question: a};
-};
-var _user$project$Form$initQuestion = _user$project$Form$Question('');
+var _user$project$Form$Question = F2(
+	function (a, b) {
+		return {question: a, answers: b};
+	});
+var _user$project$Form$initQuestion = A2(
+	_user$project$Form$Question,
+	'',
+	{ctor: '[]'});
 var _user$project$Form$init = A2(
 	_elm_lang$core$Platform_Cmd_ops['!'],
 	{
 		formTitle: '',
 		questions: {ctor: '[]'},
-		currentQuestion: _user$project$Form$initQuestion
+		currentQuestion: _user$project$Form$initQuestion,
+		currentAnswer: ''
 	},
 	{ctor: '[]'});
 var _user$project$Form$update = F2(
@@ -8297,15 +8356,24 @@ var _user$project$Form$update = F2(
 						{formTitle: _p1._0}),
 					{ctor: '[]'});
 			case 'QuestionText':
+				var currentQuestion = model.currentQuestion;
+				var newCurrentQuestion = _elm_lang$core$Native_Utils.update(
+					currentQuestion,
+					{question: _p1._0});
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{
-							currentQuestion: _user$project$Form$Question(_p1._0)
-						}),
+						{currentQuestion: newCurrentQuestion}),
 					{ctor: '[]'});
-			default:
+			case 'AnswerText':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{currentAnswer: _p1._0}),
+					{ctor: '[]'});
+			case 'AddQuestion':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
@@ -8322,9 +8390,95 @@ var _user$project$Form$update = F2(
 							currentQuestion: _user$project$Form$initQuestion
 						}),
 					{ctor: '[]'});
+			default:
+				var currentQuestion = model.currentQuestion;
+				var newCurrentQuestion = _elm_lang$core$Native_Utils.update(
+					currentQuestion,
+					{
+						answers: A2(
+							_elm_lang$core$Basics_ops['++'],
+							currentQuestion.answers,
+							{
+								ctor: '::',
+								_0: model.currentAnswer,
+								_1: {ctor: '[]'}
+							})
+					});
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{currentQuestion: newCurrentQuestion, currentAnswer: ''}),
+					{ctor: '[]'});
 		}
 	});
+var _user$project$Form$AddAnswer = {ctor: 'AddAnswer'};
 var _user$project$Form$AddQuestion = {ctor: 'AddQuestion'};
+var _user$project$Form$AnswerText = function (a) {
+	return {ctor: 'AnswerText', _0: a};
+};
+var _user$project$Form$answerFormView = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$p,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Answers'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$label,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('Answer'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$input,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onInput(_user$project$Form$AnswerText),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$placeholder('answer'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$value(model.currentAnswer),
+									_1: {ctor: '[]'}
+								}
+							}
+						},
+						{ctor: '[]'}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$button,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onClick(_user$project$Form$AddAnswer),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('Add answer'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
 var _user$project$Form$QuestionText = function (a) {
 	return {ctor: 'QuestionText', _0: a};
 };
@@ -8363,19 +8517,27 @@ var _user$project$Form$questionFormView = function (model) {
 					{ctor: '[]'}),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$button,
-						{
+					_0: _user$project$Form$showAnswers(model.currentQuestion),
+					_1: {
+						ctor: '::',
+						_0: _user$project$Form$answerFormView(model),
+						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(_user$project$Form$AddQuestion),
+							_0: A2(
+								_elm_lang$html$Html$button,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Events$onClick(_user$project$Form$AddQuestion),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('Add question'),
+									_1: {ctor: '[]'}
+								}),
 							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Add question'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
+						}
+					}
 				}
 			}
 		});
@@ -8443,7 +8605,11 @@ var _user$project$Form$view = function (model) {
 												_elm_lang$core$List$length(model.questions)))),
 									_1: {ctor: '[]'}
 								}),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: _user$project$Form$viewQuestions(model.questions),
+								_1: {ctor: '[]'}
+							}
 						}
 					}
 				}
