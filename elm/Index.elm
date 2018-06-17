@@ -1,6 +1,7 @@
 module Index exposing (main)
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 
 type Model = Nothing
 
@@ -19,7 +20,7 @@ view : Model -> Html Msg
 view model =
   div []
     [ p [] [text "Create your own forms!"]
-    , button [] [text "Create new form"]
+    , a [href "/form/new"] [text "Create new form"]
     ]
 
 

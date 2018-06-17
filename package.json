@@ -4,7 +4,7 @@
   "description": "Create forms",
   "main": "app.js",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "npm run elm-compile && node ./bin/www",
     "elm-compile": "cd elm && ../node_modules/elm/binwrappers/elm-make *.elm --output ../public/js/elm.js --yes --warn",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
