@@ -3,6 +3,10 @@ module Form exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
+import Http
+import Json.Decode as Json exposing (..)
+import Json.Encode as Encode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 
 
 type alias Model =
@@ -19,6 +23,8 @@ type Msg
     | AnswerText String
     | AddQuestion
     | AddAnswer
+    | PublishForm
+    | ReplyForm (Result Http.Error Reply)
 
 
 init : ( Model, Cmd Msg )
@@ -63,6 +69,15 @@ update msg model =
             in
                 { model | currentQuestion = newCurrentQuestion, currentAnswer = "" } ! []
 
+        PublishForm ->
+            ( model, publishForm model )
+
+        ReplyForm (Ok data) ->
+            model ! []
+
+        ReplyForm (Err err) ->
+            model ! []
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -78,6 +93,7 @@ view model =
         , questionFormView model
         , p [] [ text <| "Number of questions: " ++ (toString <| List.length model.questions) ]
         , viewQuestions model.questions
+        , button [ onClick PublishForm ] [ text "Publish form" ]
         ]
 
 
@@ -93,7 +109,7 @@ questionFormView : Model -> Html Msg
 questionFormView model =
     div []
         [ label [] [ text "Question" ]
-        , input [ onInput QuestionText, placeholder "Question", value <| getQuestionValue model.currentQuestion ] []
+        , input [ onInput QuestionText, placeholder "Question", Html.Attributes.value <| getQuestionValue model.currentQuestion ] []
         , showAnswers model.currentQuestion
         , answerFormView model
         , button [ onClick AddQuestion ] [ text "Add question" ]
@@ -119,7 +135,7 @@ answerFormView model =
     div []
         [ p [] [ text "Answers" ]
         , label [] [ text "Answer" ]
-        , input [ onInput AnswerText, placeholder "answer", value model.currentAnswer ] []
+        , input [ onInput AnswerText, placeholder "answer", Html.Attributes.value model.currentAnswer ] []
         , button [ onClick AddAnswer ] [ text "Add answer" ]
         ]
 
@@ -147,3 +163,43 @@ main =
         , subscriptions = subscriptions
         , view = view
         }
+
+
+publishForm : Model -> Cmd Msg
+publishForm model =
+    let
+        body =
+            model
+                |> formEncoder
+                |> Http.jsonBody
+    in
+        Http.post ("/form/create") body formDecoder
+            |> Http.send ReplyForm
+
+
+formEncoder : Model -> Encode.Value
+formEncoder model =
+    Encode.object
+        [ ( "title", Encode.string model.formTitle )
+        , ( "questions", Encode.list <| List.map questionEncoder model.questions )
+        ]
+
+
+questionEncoder : Question -> Encode.Value
+questionEncoder question =
+    Encode.object
+        [ ( "question", Encode.string question.question )
+        , ( "answers", Encode.list <| List.map Encode.string question.answers )
+        ]
+
+
+type alias Reply =
+    { ok : Bool }
+
+
+formDecoder : Json.Decoder Reply
+formDecoder =
+    decode Reply
+        |> Json.Decode.Pipeline.required
+            "ok"
+            Json.bool
