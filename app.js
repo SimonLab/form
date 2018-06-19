@@ -1,3 +1,4 @@
+require("env2")(".env");
 var express = require("express");
 var path = require("path");
 var hbs = require("hbs");

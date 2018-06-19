@@ -9253,7 +9253,6 @@ var _user$project$Form$ReplyForm = function (a) {
 var _user$project$Form$publishForm = function (model) {
 	var body = _elm_lang$http$Http$jsonBody(
 		_user$project$Form$formEncoder(model));
-	var _p1 = A2(_elm_lang$core$Debug$log, 'body', body);
 	return A2(
 		_elm_lang$http$Http$send,
 		_user$project$Form$ReplyForm,
@@ -9261,20 +9260,20 @@ var _user$project$Form$publishForm = function (model) {
 };
 var _user$project$Form$update = F2(
 	function (msg, model) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
+		var _p1 = msg;
+		switch (_p1.ctor) {
 			case 'Title':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{formTitle: _p2._0}),
+						{formTitle: _p1._0}),
 					{ctor: '[]'});
 			case 'QuestionText':
 				var currentQuestion = model.currentQuestion;
 				var newCurrentQuestion = _elm_lang$core$Native_Utils.update(
 					currentQuestion,
-					{question: _p2._0});
+					{question: _p1._0});
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
@@ -9286,7 +9285,7 @@ var _user$project$Form$update = F2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{currentAnswer: _p2._0}),
+						{currentAnswer: _p1._0}),
 					{ctor: '[]'});
 			case 'AddQuestion':
 				return A2(
@@ -9332,8 +9331,7 @@ var _user$project$Form$update = F2(
 					_1: _user$project$Form$publishForm(model)
 				};
 			default:
-				if (_p2._0.ctor === 'Ok') {
-					var _p3 = A2(_elm_lang$core$Debug$log, 'data', _p2._0._0);
+				if (_p1._0.ctor === 'Ok') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						model,
