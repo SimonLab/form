@@ -7,15 +7,32 @@ router.get("/new", function(req, res, next) {
 });
 
 router.post("/create", function(req, res, next) {
-  console.log(req.body);
-  db.query('INSERT INTO forms (name) VALUES ($1)', [req.body.title], (err, result) => {
+  db.query('INSERT INTO forms (name) VALUES ($1) RETURNING id;', [req.body.title], (err, result) => {
     if (err) {
       return next(err)
     }
-    console.log(result);
-    // res.send(res.rows[0])
-    return res.json({ok: true});
+    var idForm = result.rows[0].id;
+    var questionValues = [];
+    var anwerValues = []
+    req.body.questions.forEach(function(question, index) {
+      questionValues.push(`(${idForm}, '${question.question}', ${index})`);
+    });
+    db.query('INSERT INTO questions (form_id, question, num) VALUES '+ questionValues.join(',') +' RETURNING id;', [], (err, result) => {
+      if (err) {
+        return next(err)
+      }
+      var answerValues = [];
+      req.body.questions.forEach(function(question, indexQuestion) {
+        question.answers.forEach(function(answer, indexAnswer) {
+          answerValues.push(`(${result.rows[indexQuestion].id}, '${answer}', ${indexAnswer})`);
+        });
+      });
+      db.query('INSERT INTO answers (question_id, value, num) VALUES '+ answerValues.join(',') +' RETURNING id;', [], (err, result) => {
+        return res.json({ok: true});
+      });
+    })
   });
 });
+
 
 module.exports = router;
