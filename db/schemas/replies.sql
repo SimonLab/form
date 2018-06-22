@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS replies (
   id SERIAL PRIMARY KEY,
-  form_reply_id INTEGER REFERENCES form_replies (id),
-  answer_id INTEGER REFERENCES answers (id)
+  form_id INTEGER REFERENCES forms (id),
+  created_at TIMESTAMP DEFAULT NOW()
 );

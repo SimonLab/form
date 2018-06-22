@@ -11,10 +11,10 @@ var formReplies = fs.readFileSync(path.join(__dirname, "schemas/form_replies.sql
 var replies = fs.readFileSync(path.join(__dirname, "schemas/replies.sql")).toString();
 
 db.query(forms, [], (err, result) => {
-  db.query(questions, [], (err, result) => {
-    db.query(answers, [], (err, result) => {
-      db.query(formReplies, [], (err, result) => {
-        db.query(replies, [], (err, result) => {
+  db.query(replies, [], (err, result) => {
+    db.query(questions, [], (err, result) => {
+      db.query(answers, [], (err, result) => {
+        db.query(formReplies, [], (err, result) => {
           return  "ok";
         });
       });

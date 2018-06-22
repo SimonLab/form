@@ -34,5 +34,41 @@ router.post("/create", function(req, res, next) {
   });
 });
 
+function groupQuestions(answerRows) {
+  return answerRows.reduce(function(acc, answer) {
+    acc[answer.question_id] = acc[answer.question_id] || [];
+    acc[answer.question_id].push(answer);
+    return acc;
+  }, {});
+}
+
+router.get("/show/:id", function(req, res, next) {
+  var idForm = req.params.id;
+  var query = `SELECT
+   forms.id as form_id,
+   forms.name,
+   questions.id as question_id,
+   questions.question,
+   answers.value as answer
+   FROM forms
+   LEFT JOIN questions ON forms.id = questions.form_id
+   LEFT JOIN answers ON questions.id = answers.question_id
+   WHERE forms.id = ${idForm};`
+  db.query(query, [], (err, result) => {
+    if (err) {
+      return next(err)
+    }
+    var rows = result.rows;
+    if (rows.length > 0) {
+      var title = rows[0].name;
+      var questions = groupQuestions(rows);
+      res.render('form/show', {title: title});
+    } else {
+      res.render('form/show', {title: `No form found with the id ${idForm}`});
+    }
+  })
+});
+
+
 
 module.exports = router;
