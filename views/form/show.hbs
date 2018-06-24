@@ -1,1 +1,10 @@
-<h1>{{title}}</h1>
+<div id="elm"></div>
+
+<!-- load form data -->
+<script>
+  var formData = {{{json formData }}}
+</script>
+
+<script>
+  Elm.Answer.embed(document.getElementById("elm"), formData);
+</script>

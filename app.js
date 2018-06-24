@@ -10,6 +10,9 @@ var formRouter = require("./routes/form.js");
 var app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");
+hbs.registerPartials(__dirname + "/views/partials");
+hbs.registerHelper("json", function(obj) { return JSON.stringify(obj); });
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(logger("dev"));

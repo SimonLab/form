@@ -34,21 +34,51 @@ router.post("/create", function(req, res, next) {
   });
 });
 
-function groupQuestions(answerRows) {
-  return answerRows.reduce(function(acc, answer) {
-    acc[answer.question_id] = acc[answer.question_id] || [];
-    acc[answer.question_id].push(answer);
-    return acc;
-  }, {});
+// return array of question ids
+function getQuestionIds(rows) {
+  return rows.reduce(function(acc, val) {
+    if (acc.indexOf(val.question_id) === -1) {
+      acc.push(val.question_id);
+      return acc;
+    } else {
+      return acc
+    }
+  }, [])
+}
+
+function getAnswers(rows) {
+  return rows.map(function(answer) {
+    return {
+      answer_id: answer.answer_id,
+      answer: answer.answer,
+      question_id: answer.question_id
+    }
+  })
+}
+
+function groupQuestions(rows) {
+  var questionIds = getQuestionIds(rows);
+  var res = questionIds.map(function(id) {
+    var answers = rows.filter(function(r) {
+      return r.answer_question_id === id;
+    });
+    return { question_id: id,
+             question: answers[0].question,
+             answers: getAnswers(answers)
+           }
+  });
+  return res;
 }
 
 router.get("/show/:id", function(req, res, next) {
   var idForm = req.params.id;
   var query = `SELECT
    forms.id as form_id,
-   forms.name,
+   forms.name as title,
    questions.id as question_id,
    questions.question,
+   answers.question_id as answer_question_id,
+   answers.id as answer_id,
    answers.value as answer
    FROM forms
    LEFT JOIN questions ON forms.id = questions.form_id
@@ -60,11 +90,12 @@ router.get("/show/:id", function(req, res, next) {
     }
     var rows = result.rows;
     if (rows.length > 0) {
-      var title = rows[0].name;
-      var questions = groupQuestions(rows);
-      res.render('form/show', {title: title});
+      var title = rows[0].title;
+      var questions = groupQuestions(rows)
+
+      res.render('form/show', {formData: {title: title, questions: questions}});
     } else {
-      res.render('form/show', {title: `No form found with the id ${idForm}`});
+      res.render('form/show', {formData: {title: `No form found with the id ${idForm}`}});
     }
   })
 });
