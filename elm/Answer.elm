@@ -4,6 +4,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Dict exposing (..)
+import Http
+import Json.Decode as Json exposing (..)
+import Json.Encode as Encode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 
 
 -- The Flags and Model modules should not depend on each other.
@@ -11,7 +15,7 @@ import Dict exposing (..)
 
 
 type alias Flags =
-    { title : String, questions : List QuestionFlags }
+    { id : String, title : String, questions : List QuestionFlags }
 
 
 type alias QuestionFlags =
@@ -23,7 +27,7 @@ type alias AnswerFlags =
 
 
 type alias Model =
-    { title : String, questions : List Question, replies : Replies }
+    { id : String, title : String, questions : List Question, replies : Replies, completed : Bool }
 
 
 type alias Question =
@@ -38,14 +42,19 @@ type alias Replies =
     Dict Int Int
 
 
+type alias ReplySubmit =
+    { ok : Bool }
+
+
 type Msg
     = SelectAnswer Int Int
     | Submit
+    | Reply (Result Http.Error ReplySubmit)
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    Model flags.title (initQuestions flags.questions) Dict.empty ! []
+    Model flags.id flags.title (initQuestions flags.questions) Dict.empty False ! []
 
 
 initQuestions : List QuestionFlags -> List Question
@@ -69,6 +78,12 @@ update msg model =
                 { model | replies = replies } ! []
 
         Submit ->
+            ( model, submitAnswer model )
+
+        Reply (Ok data) ->
+            { model | completed = True } ! []
+
+        Reply (Err err) ->
             model ! []
 
 
@@ -81,14 +96,21 @@ view : Model -> Html Msg
 view model =
     div []
         [ text model.title
-        , viewQuestions model.questions
-        , button [ onClick Submit ] [ text "Submit" ]
+        , if (not model.completed) then
+            (viewQuestions model.questions)
+          else
+            viewThankYou
         ]
+
+
+viewThankYou : Html Msg
+viewThankYou =
+    div [] [ text "Thank you for the answers" ]
 
 
 viewQuestions : List Question -> Html Msg
 viewQuestions questions =
-    div [] (List.map renderQuestion questions)
+    div [] <| (List.map renderQuestion questions) ++ [ button [ onClick Submit ] [ text "Submit" ] ]
 
 
 renderQuestion : Question -> Html Msg
@@ -110,6 +132,36 @@ renderAnswer answer =
         [ input [ type_ "radio", name (toString answer.questionId), onClick (SelectAnswer answer.questionId answer.answerId) ] []
         , label [] [ text answer.answer ]
         ]
+
+
+submitAnswer : Model -> Cmd Msg
+submitAnswer model =
+    let
+        body =
+            Encode.object [ ( "idForm", Encode.string model.id ), ( "answers", (replyEncoder model) ) ]
+                |> Http.jsonBody
+    in
+        Http.post "/form/reply" body replyDecoder
+            |> Http.send Reply
+
+
+
+-- Encoder Decoder for reply
+
+
+replyEncoder : Model -> Encode.Value
+replyEncoder model =
+    Dict.toList model.replies
+        |> List.map (\( k, v ) -> ( (toString k), Encode.int v ))
+        |> Encode.object
+
+
+replyDecoder : Json.Decoder ReplySubmit
+replyDecoder =
+    decode ReplySubmit
+        |> Json.Decode.Pipeline.required
+            "ok"
+            Json.bool
 
 
 main : Program Flags Model Msg

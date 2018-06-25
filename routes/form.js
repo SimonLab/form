@@ -93,13 +93,31 @@ router.get("/show/:id", function(req, res, next) {
       var title = rows[0].title;
       var questions = groupQuestions(rows)
 
-      res.render('form/show', {formData: {title: title, questions: questions}});
+      res.render('form/show', {formData: {id: idForm, title: title, questions: questions}});
     } else {
       res.render('form/show', {formData: {title: `No form found with the id ${idForm}`}});
     }
   })
 });
 
+
+router.post("/reply", function(req, res, next) {
+  var replyValues = [];
+  db.query('INSERT INTO replies (form_id) VALUES ($1) RETURNING form_id;', [req.body.idForm], (err, result) => {
+    if (err) {
+      return next(err)
+    }
+    Object.keys(req.body.answers).forEach(function(k) {
+      replyValues.push(`(${req.body.idForm}, ${req.body.answers[k]})`)
+    });
+    db.query('INSERT INTO form_replies (reply_id, answer_id) VALUES ' + replyValues.join(',') + ';', [], (err, result) => {
+      if (err) {
+        return next(err)
+      }
+      return res.json({ok: true});
+    });
+  });
+});
 
 
 module.exports = router;

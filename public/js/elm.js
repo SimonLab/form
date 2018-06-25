@@ -9113,31 +9113,34 @@ var _elm_lang$http$Http$StringPart = F2(
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
+var _user$project$Answer$replyEncoder = function (model) {
+	return _elm_lang$core$Json_Encode$object(
+		A2(
+			_elm_lang$core$List$map,
+			function (_p0) {
+				var _p1 = _p0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Basics$toString(_p1._0),
+					_1: _elm_lang$core$Json_Encode$int(_p1._1)
+				};
+			},
+			_elm_lang$core$Dict$toList(model.replies)));
+};
+var _user$project$Answer$viewThankYou = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html$text('Thank you for the answers'),
+		_1: {ctor: '[]'}
+	});
 var _user$project$Answer$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
-var _user$project$Answer$update = F2(
-	function (msg, model) {
-		var _p0 = msg;
-		if (_p0.ctor === 'SelectAnswer') {
-			var replies = A3(_elm_lang$core$Dict$insert, _p0._0, _p0._1, model.replies);
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				_elm_lang$core$Native_Utils.update(
-					model,
-					{replies: replies}),
-				{ctor: '[]'});
-		} else {
-			var _p1 = A2(_elm_lang$core$Debug$log, 'submit model', model);
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				model,
-				{ctor: '[]'});
-		}
-	});
-var _user$project$Answer$Flags = F2(
-	function (a, b) {
-		return {title: a, questions: b};
+var _user$project$Answer$Flags = F3(
+	function (a, b, c) {
+		return {id: a, title: b, questions: c};
 	});
 var _user$project$Answer$QuestionFlags = F2(
 	function (a, b) {
@@ -9147,9 +9150,9 @@ var _user$project$Answer$AnswerFlags = F3(
 	function (a, b, c) {
 		return {answer_id: a, answer: b, question_id: c};
 	});
-var _user$project$Answer$Model = F3(
-	function (a, b, c) {
-		return {title: a, questions: b, replies: c};
+var _user$project$Answer$Model = F5(
+	function (a, b, c, d, e) {
+		return {id: a, title: b, questions: c, replies: d, completed: e};
 	});
 var _user$project$Answer$Question = F2(
 	function (a, b) {
@@ -9181,13 +9184,85 @@ var _user$project$Answer$initQuestions = function (questions) {
 var _user$project$Answer$init = function (flags) {
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
-		A3(
+		A5(
 			_user$project$Answer$Model,
+			flags.id,
 			flags.title,
 			_user$project$Answer$initQuestions(flags.questions),
-			_elm_lang$core$Dict$empty),
+			_elm_lang$core$Dict$empty,
+			false),
 		{ctor: '[]'});
 };
+var _user$project$Answer$ReplySubmit = function (a) {
+	return {ok: a};
+};
+var _user$project$Answer$replyDecoder = A3(
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
+	'ok',
+	_elm_lang$core$Json_Decode$bool,
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Answer$ReplySubmit));
+var _user$project$Answer$Reply = function (a) {
+	return {ctor: 'Reply', _0: a};
+};
+var _user$project$Answer$submitAnswer = function (model) {
+	var body = _elm_lang$http$Http$jsonBody(
+		_elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'idForm',
+					_1: _elm_lang$core$Json_Encode$string(model.id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'answers',
+						_1: _user$project$Answer$replyEncoder(model)
+					},
+					_1: {ctor: '[]'}
+				}
+			}));
+	return A2(
+		_elm_lang$http$Http$send,
+		_user$project$Answer$Reply,
+		A3(_elm_lang$http$Http$post, '/form/reply', body, _user$project$Answer$replyDecoder));
+};
+var _user$project$Answer$update = F2(
+	function (msg, model) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
+			case 'SelectAnswer':
+				var replies = A3(_elm_lang$core$Dict$insert, _p2._0, _p2._1, model.replies);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{replies: replies}),
+					{ctor: '[]'});
+			case 'Submit':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Answer$submitAnswer(model)
+				};
+			default:
+				if (_p2._0.ctor === 'Ok') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{completed: true}),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+		}
+	});
 var _user$project$Answer$Submit = {ctor: 'Submit'};
 var _user$project$Answer$SelectAnswer = F2(
 	function (a, b) {
@@ -9255,7 +9330,25 @@ var _user$project$Answer$viewQuestions = function (questions) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
-		A2(_elm_lang$core$List$map, _user$project$Answer$renderQuestion, questions));
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(_elm_lang$core$List$map, _user$project$Answer$renderQuestion, questions),
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$button,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onClick(_user$project$Answer$Submit),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('Submit'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			}));
 };
 var _user$project$Answer$view = function (model) {
 	return A2(
@@ -9266,23 +9359,8 @@ var _user$project$Answer$view = function (model) {
 			_0: _elm_lang$html$Html$text(model.title),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Answer$viewQuestions(model.questions),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$button,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(_user$project$Answer$Submit),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('submit'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				}
+				_0: (!model.completed) ? _user$project$Answer$viewQuestions(model.questions) : _user$project$Answer$viewThankYou,
+				_1: {ctor: '[]'}
 			}
 		});
 };
@@ -9290,51 +9368,56 @@ var _user$project$Answer$main = _elm_lang$html$Html$programWithFlags(
 	{init: _user$project$Answer$init, update: _user$project$Answer$update, subscriptions: _user$project$Answer$subscriptions, view: _user$project$Answer$view})(
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
-		function (questions) {
+		function (id) {
 			return A2(
 				_elm_lang$core$Json_Decode$andThen,
-				function (title) {
-					return _elm_lang$core$Json_Decode$succeed(
-						{questions: questions, title: title});
+				function (questions) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						function (title) {
+							return _elm_lang$core$Json_Decode$succeed(
+								{id: id, questions: questions, title: title});
+						},
+						A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string));
 				},
-				A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string));
-		},
-		A2(
-			_elm_lang$core$Json_Decode$field,
-			'questions',
-			_elm_lang$core$Json_Decode$list(
 				A2(
-					_elm_lang$core$Json_Decode$andThen,
-					function (answers) {
-						return A2(
+					_elm_lang$core$Json_Decode$field,
+					'questions',
+					_elm_lang$core$Json_Decode$list(
+						A2(
 							_elm_lang$core$Json_Decode$andThen,
-							function (question) {
-								return _elm_lang$core$Json_Decode$succeed(
-									{answers: answers, question: question});
+							function (answers) {
+								return A2(
+									_elm_lang$core$Json_Decode$andThen,
+									function (question) {
+										return _elm_lang$core$Json_Decode$succeed(
+											{answers: answers, question: question});
+									},
+									A2(_elm_lang$core$Json_Decode$field, 'question', _elm_lang$core$Json_Decode$string));
 							},
-							A2(_elm_lang$core$Json_Decode$field, 'question', _elm_lang$core$Json_Decode$string));
-					},
-					A2(
-						_elm_lang$core$Json_Decode$field,
-						'answers',
-						_elm_lang$core$Json_Decode$list(
 							A2(
-								_elm_lang$core$Json_Decode$andThen,
-								function (answer) {
-									return A2(
+								_elm_lang$core$Json_Decode$field,
+								'answers',
+								_elm_lang$core$Json_Decode$list(
+									A2(
 										_elm_lang$core$Json_Decode$andThen,
-										function (answer_id) {
+										function (answer) {
 											return A2(
 												_elm_lang$core$Json_Decode$andThen,
-												function (question_id) {
-													return _elm_lang$core$Json_Decode$succeed(
-														{answer: answer, answer_id: answer_id, question_id: question_id});
+												function (answer_id) {
+													return A2(
+														_elm_lang$core$Json_Decode$andThen,
+														function (question_id) {
+															return _elm_lang$core$Json_Decode$succeed(
+																{answer: answer, answer_id: answer_id, question_id: question_id});
+														},
+														A2(_elm_lang$core$Json_Decode$field, 'question_id', _elm_lang$core$Json_Decode$int));
 												},
-												A2(_elm_lang$core$Json_Decode$field, 'question_id', _elm_lang$core$Json_Decode$int));
+												A2(_elm_lang$core$Json_Decode$field, 'answer_id', _elm_lang$core$Json_Decode$int));
 										},
-										A2(_elm_lang$core$Json_Decode$field, 'answer_id', _elm_lang$core$Json_Decode$int));
-								},
-								A2(_elm_lang$core$Json_Decode$field, 'answer', _elm_lang$core$Json_Decode$string)))))))));
+										A2(_elm_lang$core$Json_Decode$field, 'answer', _elm_lang$core$Json_Decode$string))))))));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$string)));
 
 var _user$project$Form$questionEncoder = function (question) {
 	return _elm_lang$core$Json_Encode$object(
